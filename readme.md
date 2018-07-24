@@ -4,12 +4,12 @@
 
 #### 代码目录
 ```js
-+-- dist/                                  ---打包的文件目录
++-- dist/                                   ---打包的文件目录
 +-- node_modules/                           ---npm下载文件目录
 +-- src/                                    ---核心代码目录
 |   +-- react                               ---react库
 |   +-- react-dom                           ---react-dom库
---- index.html							                 ---首页入口html文件
+--- index.html							                ---首页入口html文件
 --- package.json                            ---项目依赖配置文件
 ```
 

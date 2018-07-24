@@ -1,37 +1,42 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const CleanWebpackPlugin = require('clean-webpack-plugin');
+
 const webpack = require('webpack');
+
+const SRC = path.resolve('src');
+const DIST = path.resolve(__dirname, 'dist');
 
 module.exports = {
   entry: {
-    app: path.join(__dirname, 'src/index.js'),
+    app: path.resolve(SRC, 'index.js'),
+    // vendor: ['react', 'react-dom']
   },
   output: {
-    path: path.join(__dirname, './dist'),
-    filename: '[name]bundle.js'
+    path: DIST,
+    filename: '[name].[chunkhash].js',
+    chunkFilename: '[name].[chunkhash].js',
+    publicPath: '/'
   },
   module: {
     rules: [
       {
         test: /\.(js|jsx)?$/,
         use: [
-          'babel-loader'
+          'babel-loader?cacheDirectory=true'
         ],
-        include: path.join(__dirname, 'src')
+        include: SRC
       },
       {
-        test: /.css$/,
+        test: /\.css$/,
         use: [
           {
-            loader: 'style-loader'
+            loader: 'style-loader',
           },
           {
             loader: 'css-loader'
           }
-        ],
-        include: path.join(__dirname, 'src')
+        ]
       }
     ]
-  }
+  },
 }

@@ -1,6 +1,6 @@
 /*
-* render function
-* diff 算法
+ * render function
+ * diff 算法
  */
 
 import render from './render';

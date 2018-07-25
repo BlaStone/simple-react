@@ -9,7 +9,8 @@
 +-- src/                                    ---核心代码目录
 |   +-- react                               ---react库
 |   +-- react-dom                           ---react-dom库
---- index.html							                ---首页入口html文件
+|   +-- index.js                            ---入口js文件
+--- index.html                              ---首页入口html文件
 --- package.json                            ---项目依赖配置文件
 ```
 

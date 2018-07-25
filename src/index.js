@@ -6,8 +6,9 @@ function Welcome (props) {
     <h1>{props.name}</h1>
   );
 }
-debugger
+
 const element = <Welcome name="sara" />
+// const element = 'testetst'
 
 ReactDOM.render(
   element,

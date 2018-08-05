@@ -138,7 +138,8 @@ export function renderComponent (component) {
     component.componentWillUpdate()
   }
   
-  base = _render(renderer);
+  // base = _render(renderer);
+  base = diff(component.base, renderer);
   
   if (component.base) {
     if (component.componentDidUpdate) component.componentDidUpdate();
@@ -166,18 +167,21 @@ function diff (dom, vNode) {
   let newDom;
   
   if (typeof vNode === 'string') {
+    
     // 若真实dom同样是文本节点，则直接更新文本即可
     if (dom && dom.nodeType === 3) {
+      
       // 若真实dom文本与虚拟dom文本不同则替换
       if (dom.textContent !== vNode) dom.textContent = vNode
+    } else {
+      
+      // 若真实dom不是文本节点，则新建一个文本节点，且删除真实dom
+      newDom = document.createTextNode(vNode);
+      
+      // 获取其父节点，将原子节点替换成文本节点
+      if (dom && dom.parentNode) dom.parentNode.replaceChild(newDom, dom)
     }
-  } else {
-    // 若真实dom不是文本节点，则新建一个文本节点，且删除真实dom
-    newDom = document.createTextNode(vNode);
-    if (dom && dom.parentNode) {
-      // 获取其父节点，将父节点的子节点替换成文本节点
-      dom.parentNode.replaceChild(newDom, dom)
-    }
+    
     return newDom
   }
   
@@ -303,6 +307,107 @@ function diffChildren (dom, vChildren) {
       }
     }
   }
+}
+
+/**
+ * 对比组件
+ * @dom {*} 真实dom
+ * @vNode {*} 虚拟dom
+ */
+
+function diffComponent (dom, vNode) {
+  let c = dom && dom._component;
+  let oldDom = dom;
+  
+  // 如果组件类型没有变化，则重新set props
+  if (c && c.constructor === vNode.tag) {
+    setComponentProps(c, vNode.attrs);
+    dom = c.base;
+  } else {
+    
+    // 如果组件类型变化，则移除掉原来组件，并渲染新的组件
+    if (c) {
+      unmountComponent(c);
+      oldDom = null;
+    }
+    
+    c = createComponent(vNode.tag, vNode.attrs);
+    
+    setComponentProps(c, vNode.attrs);
+    dom = c.base;
+    
+    if (oldDom && dom !== oldDom) {
+      oldDom._component = null;
+      removeNode(oldDom);
+    }
+  }
+  
+  return dom;
+}
+
+
+/**
+ * setState {function}
+ * 异步更新state，将短时间内的多个setState合并成一个
+ * 为了解决异步更新导致的问题，增加另一种形式的setState：接受一个函数作为参数，在函数中可以得到前一个状态并返回下一个状态
+ */
+
+/**
+ * 需要更新的state队列
+ * [queue description]
+ * @type {Array}
+ * 队列是一种数据结构，它的特点是“先进先出”，可以通过js数组的push和shift方法模拟
+然后需要定义一个”入队“的方法，用来将更新添加进队列。
+ */
+const queue = [];
+const renderQueue = [];
+function enqueueSetState(stateChange, component) {
+  if (queue.length === 0) defer(flush);
+  
+  queue.push({
+    stateChange,
+    component,
+  });
+  
+  // 如果renderqueue里没有当前组件，则添加到队列中
+  if (!renderQueue.some(item => item === component)) {
+    renderQueue.push(component);
+  }
+}
+
+/**
+ * 清空state队列
+ */
+function flush () {
+  let item, component;
+  while(item = queue.shift()) {
+    // 队列是先进先出，所以每次取数组的第一个元素
+    const { stateChange, component } = item;
+    
+    // 如果没有prevstate，则鼗当前的state作为初始的prevstate
+    if (!component.prevState) {
+      component.prevState = Object.assign({}, component.state)
+    }
+    
+    // 如果statechange是一个方法，bnmyi是setstate的第二种形式
+    if (typeof stateChange === 'function') {
+      Object.assign(component.state, stateChange(component.prevState, component.props))
+    } else {
+      
+      // 如果statechange是一个对象，则直接合并到setstate中
+      Object.assign(component.state, stateChange);
+    }
+    
+    component.prevState = component.state;
+  }
+  
+  while(component = renderQueue.shift()) {
+    renderComponent(component);
+  }
+}
+
+function defer (fn) {
+  return Promise.resolve().then(fn);
 }
 
 export default render;
